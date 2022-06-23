@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { chromium, Cookie, Page } from 'playwright';
 
 import { delay } from '../utils.js';
-import { login } from './utils.js';
+import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, login, normalizeDate } from './utils.js';
 
 
 async function getOrderUrls(page: Page) {
@@ -17,7 +17,9 @@ async function getOrderUrls(page: Page) {
 		const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 		// @ts-ignore
 		const activitySummary = document.querySelector('#ActivitySummary');
+		// @ts-ignore
 		while (activitySummary.scrollHeight > (activitySummary.scrollTop + activitySummary.clientHeight)) {
+			// @ts-ignore
 			activitySummary.scrollTo(0, activitySummary.scrollHeight);
 			await delay(100);
 		}
@@ -29,6 +31,7 @@ async function getOrderUrls(page: Page) {
 	console.log("Done waiting for 25 orders");
 
 	let orderUrls = await $orderLinkLoc.evaluateAll((elements)=>{
+		// @ts-ignore
 		return elements.map(e=>e.href)
 	});
 	return orderUrls;
@@ -40,6 +43,7 @@ async function processOrderList(page: Page, orderUrl: string) {
 	const $tracking = page.locator('.tracking-nbrs-summary-link'); // may be multiple
 	await $tracking.first().waitFor(); //what happens for pending order?
 	let trackingNumbers = await $tracking.evaluateAll(elements => {
+		// @ts-ignore
 		return elements.map(el => ({href: el.href, text: el.innerText}));
 	});
 
@@ -73,28 +77,15 @@ async function processOrderList(page: Page, orderUrl: string) {
 	const parts = orderUrl.split("/");
 	const orderId = parts[parts.length-1];
 
-
-
 	return {
 		shipping: trackingNumbers,
-		orderId: 	orderId,
+		orderId:  orderId,
 		costs:    costs,
+		date:     normalizeDate(await getOrderDate(page)),
+		po:       await getPurchaseOrder(page)
 		// @todo lineItems
 	}
 }
-
-// function extractPDFName(orderReceiptUrl) {
-// 	var u = new URL(orderReceiptUrl);
-// 	u.hash = '';   // remove any hash #abc
-// 	u.search = ''; // remove any search ?key=value...
-
-// 	const parts = u.toString().split("/");
-// 	const lastPart = parts[parts.length-1];
-// 	const filenameWithSpaces = decodeURIComponent(lastPart);
-// 	const filename = filenameWithSpaces.replace(/\s/g, "-");
-
-// 	return filename;
-// }
 
 function buildCookieHeader(cookiesList: Cookie[]) {
 	const keyvalue = cookiesList.map(c=>`${c.name}=${c.value};`);
@@ -118,13 +109,6 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 	const cookies = await context.cookies(["https://mcmaster.com"]);
 
 
-	const orderUrl = "https://www.mcmaster.com/order-history/order/62195bdd6b8bf43f6c368068/";
-	await page.goto(orderUrl);
-	const orderDate = await page.locator(".order-dtl-date").first().innerText();
-	console.log(orderDate);
-
-	return;
-
 
 	// const orderUrl = "https://www.mcmaster.com/order-history/order/62195bdd6b8bf43f6c368068/";
 	// const orderInfo = await processOrderList(page, orderUrl);
@@ -141,25 +125,30 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 
 	//////////////
 
-	// const orderUrls = await getOrderUrls(page);
-	// for (let orderUrl of orderUrls) {
-	// 	console.log(`Navigating to ${orderUrl}`);
-	// 	const orderInfo = await processOrderList(page, orderUrl);
+	const orderUrls = await getOrderUrls(page);
+	for (let orderUrl of orderUrls) {
+		console.log(`Navigating to ${orderUrl}`);
+		const orderInfo = await processOrderList(page, orderUrl);
 
-	// 	const options = {
-	// 		headers: {
-	// 			"cookie": buildCookieHeader(cookies) //cookie needed for authentication
-	// 		}
-	// 	};
-	// 	// orderInfo.orderReceiptFile = extractPDFName(orderInfo.orderReceiptUrl);
+		const options = {
+			headers: {
+				"cookie": buildCookieHeader(cookies) //cookie needed for authentication
+			}
+		};
+		// 
 
 
+		const volver = cookies.filter(c => c.name == "volver")[0].value; // not really shure what this is
+		const receiptURL = `https://www.mcmaster.com/${volver}/WebParts/Activity/PDFRetriever/${orderInfo.date}-mcmaster-${orderInfo.po}-${orderInfo.orderId}.pdf?orderId=${orderInfo.orderId}&docType=Invoice&action=1&loaded=1&retryCount=1`
+		
+		// @ts-ignore
+		orderInfo.orderReceiptFile = extractPDFName(receiptURL);
+		// @ts-ignore
+		await downloadFile(receiptURL, `./${orderInfo.orderReceiptFile}`, options);
+		console.log(orderInfo);
 
-	// 	const receiptURL = `https://www.mcmaster.com/${cookies.filter(c=>c.name == "volver").value}/WebParts/Activity/PDFRetriever/Receipt%20for%20PO%200201BBOURQUE.pdf?orderId=${orderInfo.orderID}&docType=Invoice&action=1&loaded=1&retryCount=1`
-
-	// 	await downloadFile(orderInfo.orderReceiptUrl, `./${orderInfo.orderReceiptFile}`, options);
-	// 	console.log(orderInfo);
-	// }
+		break;
+	}
 
 	await browser.close();
 })();
