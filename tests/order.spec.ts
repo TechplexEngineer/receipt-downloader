@@ -1,17 +1,12 @@
 import { test, expect } from '@playwright/test';
 import 'dotenv/config';
 
-// import { delay, login } from '../mcmaster/app';
+import { normalizeDate, login } from "../mcmaster/utils.ts";
+import { delay } from '../utils.ts';
 
-export const delay = (ms:number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function login(page) {
-  await page.goto('https://www.mcmaster.com/order-history');
-  await page.locator('input#Email[type="text"]').waitFor()
-  await page.locator('input#Email[type="text"]').fill(process.env.MCMASTER_USERNAME);
-  await page.locator('input#Password[type="password"]').fill(process.env.MCMASTER_PASSWORD);
-  await page.locator('input#Password[type="password"]').press('Enter');
-}
+
+
 
 test('Reterieve Order Date, current year', async ({ page }) => {
   await login(page);
@@ -35,10 +30,6 @@ test('Reterieve Order Date, previous year', async ({ page }) => {
 
   await expect(orderDate).toEqual('August 7, 2021');
 });
-
-
-
-
 
 
 test.describe("test normalize date", () => {

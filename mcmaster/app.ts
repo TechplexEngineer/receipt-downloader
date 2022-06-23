@@ -1,20 +1,12 @@
 import 'dotenv/config';
 
-import { chromium } from 'playwright';
-// require('dotenv').config();
-import fs from 'node:fs';
+import { chromium, Cookie, Page } from 'playwright';
 
-export async function login(page) {
-	await page.goto('https://www.mcmaster.com/order-history');
-	await page.locator('input#Email[type="text"]').waitFor()
-	await page.locator('input#Email[type="text"]').fill(process.env.MCMASTER_USERNAME);
-	await page.locator('input#Password[type="password"]').fill(process.env.MCMASTER_PASSWORD);
-	await page.locator('input#Password[type="password"]').press('Enter');
-}
+import { delay } from '../utils.js';
+import { login } from './utils.js';
 
-export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function getOrderUrls(page) {
+async function getOrderUrls(page: Page) {
 	let $orderLinkLoc = page.locator('.order-summary-tile .order-summary.order-summary-placed a.order-summary-hdr');
 
 	await $orderLinkLoc.nth(1).waitFor();
@@ -22,7 +14,8 @@ async function getOrderUrls(page) {
 
 	// src: https://github.com/microsoft/playwright/issues/4302
 	await page.evaluate(async () => {
-		const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+		const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+		// @ts-ignore
 		const activitySummary = document.querySelector('#ActivitySummary');
 		while (activitySummary.scrollHeight > (activitySummary.scrollTop + activitySummary.clientHeight)) {
 			activitySummary.scrollTo(0, activitySummary.scrollHeight);
@@ -41,32 +34,7 @@ async function getOrderUrls(page) {
 	return orderUrls;
 }
 
-// https://stackoverflow.com/a/51302466
-// const downloadFile = (async (url, path) => {
-//   const res = await fetch(url);
-//   const fileStream = fs.createWriteStream(path);
-//   await new Promise((resolve, reject) => {
-//       res.body.pipe(fileStream);
-//       res.body.on("error", reject);
-//       fileStream.on("finish", resolve);
-//     });
-// });
-
-
-import {createWriteStream} from 'node:fs';
-import {pipeline} from 'node:stream';
-import {promisify} from 'node:util';
-
-const streamPipeline = promisify(pipeline);
-
-const downloadFile = (async (url, path, options={}) => {
-	const response = await fetch(url, options);
-	if (!response.ok) throw new Error(`unexpected response ${response.statusText}`);
-	const fileStream = fs.createWriteStream(path);
-	await streamPipeline(response.body, createWriteStream(path));
-});
-
-async function processOrderList(page, orderUrl) {
+async function processOrderList(page: Page, orderUrl: string) {
 	await page.goto(orderUrl);
 
 	const $tracking = page.locator('.tracking-nbrs-summary-link'); // may be multiple
@@ -79,7 +47,7 @@ async function processOrderList(page, orderUrl) {
 	const costText = await $costRows.allTextContents();
 	// console.log("costText", costText);
 
-	let costs = {};
+	let costs: {[key: string]: string} = {};
 	for (let rowTxt of costText) {
 		const row = rowTxt.split("\n").map(t=>t.trim()).filter(el=>el != "")
 		costs[row[0]] = row[1]
@@ -128,7 +96,7 @@ async function processOrderList(page, orderUrl) {
 // 	return filename;
 // }
 
-function buildCookieHeader(cookiesList) {
+function buildCookieHeader(cookiesList: Cookie[]) {
 	const keyvalue = cookiesList.map(c=>`${c.name}=${c.value};`);
 	const cookieStr = keyvalue.join(" ");
 	return cookieStr.slice(0, -1); //remove last semicolon
@@ -171,25 +139,27 @@ function buildCookieHeader(cookiesList) {
 	// const orderReceiptUrl = "https://www.mcmaster.com/mv1655819346/WebParts/Activity/PDFRetriever/Receipts%20for%20PO%200226BBOURQUE.pdf?orderId=62195bdd6b8bf43f6c368068&docType=Invoice&action=1&loaded=1&retryCount=1"
 	// await downloadFile(orderReceiptUrl, `./${extractPDFName(orderReceiptUrl)}`, options)
 
-	const orderUrls = await getOrderUrls(page);
-	for (let orderUrl of orderUrls) {
-		console.log(`Navigating to ${orderUrl}`);
-		const orderInfo = await processOrderList(page, orderUrl);
+	//////////////
 
-		const options = {
-			headers: {
-				"cookie": buildCookieHeader(cookies) //cookie needed for authentication
-			}
-		};
-		// orderInfo.orderReceiptFile = extractPDFName(orderInfo.orderReceiptUrl);
+	// const orderUrls = await getOrderUrls(page);
+	// for (let orderUrl of orderUrls) {
+	// 	console.log(`Navigating to ${orderUrl}`);
+	// 	const orderInfo = await processOrderList(page, orderUrl);
+
+	// 	const options = {
+	// 		headers: {
+	// 			"cookie": buildCookieHeader(cookies) //cookie needed for authentication
+	// 		}
+	// 	};
+	// 	// orderInfo.orderReceiptFile = extractPDFName(orderInfo.orderReceiptUrl);
 
 
 
-		const receiptURL = `https://www.mcmaster.com/${cookies.filter(c=>c.name == "volver").value}/WebParts/Activity/PDFRetriever/Receipt%20for%20PO%200201BBOURQUE.pdf?orderId=${orderInfo.orderID}&docType=Invoice&action=1&loaded=1&retryCount=1`
+	// 	const receiptURL = `https://www.mcmaster.com/${cookies.filter(c=>c.name == "volver").value}/WebParts/Activity/PDFRetriever/Receipt%20for%20PO%200201BBOURQUE.pdf?orderId=${orderInfo.orderID}&docType=Invoice&action=1&loaded=1&retryCount=1`
 
-		await downloadFile(orderInfo.orderReceiptUrl, `./${orderInfo.orderReceiptFile}`, options);
-		console.log(orderInfo);
-	}
+	// 	await downloadFile(orderInfo.orderReceiptUrl, `./${orderInfo.orderReceiptFile}`, options);
+	// 	console.log(orderInfo);
+	// }
 
 	await browser.close();
 })();
