@@ -11,7 +11,15 @@ import type { Page } from "playwright";
  * @returns YYYY-MM-DD
  */
 export function normalizeDate(input: string): string {
+    
+    // mcm date
     if (input.indexOf(",") == -1) {
+        input += `, ${new Date().getFullYear()}`;
+    }
+
+    // wcp date
+    if (input.indexOf(":") !== -1) {
+        input = input.substring(0, input.indexOf(":")-2)
         input += `, ${new Date().getFullYear()}`;
     }
 

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { chromium, Cookie, Page } from 'playwright';
-
+import { mkdir } from 'fs/promises';
 import { delay } from '../utils.js';
 import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, mcmLogin, normalizeDate } from './utils.js';
 
@@ -125,6 +125,8 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 
 	//////////////
 
+	await mkdir("./receipts/mcmaster", { recursive: true })
+
 	const orderUrls = await getOrderUrls(page);
 	for (let orderUrl of orderUrls) {
 		console.log(`Navigating to ${orderUrl}`);
@@ -144,7 +146,7 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 		// @ts-ignore
 		orderInfo.orderReceiptFile = extractPDFName(receiptURL);
 		// @ts-ignore
-		await downloadFile(receiptURL, `./${orderInfo.orderReceiptFile}`, options);
+		await downloadFile(receiptURL, `./receipts/mcmaster/${orderInfo.orderReceiptFile}`, options);
 		console.log(orderInfo);
 
 		// break;

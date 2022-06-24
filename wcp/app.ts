@@ -3,6 +3,9 @@ import 'dotenv/config';
 import { chromium, Cookie, Page } from 'playwright';
 import { delay } from '../utils';
 import camelCase from 'lodash.camelcase';
+import { normalizeDate } from '../mcmaster/utils.js';
+import { mkdir, writeFile } from 'fs/promises';
+import { fstat } from 'fs';
 
 async function wcpLogin(page:Page) {
     await page.goto('https://wcproducts.com/account/login?return_url=%2Faccount');
@@ -26,8 +29,10 @@ async function wcpLogin(page:Page) {
     // const page = await browser.newPage();
     const page = await context.newPage();
 
+    console.log("Starting Login")
     await wcpLogin(page);
 
+    console.log("Starting Order Extraction")
     let headers = await page.locator("table.tt-table-shop-01").evaluate((table) => {
         //@ts-ignore
         const headers = Array.from(table.querySelectorAll("thead tr th")).map(th => th.innerText);
@@ -36,7 +41,18 @@ async function wcpLogin(page:Page) {
 
     headers = headers.map(camelCase)
 
-    let data = await page.locator("table.tt-table-shop-01").evaluate((table, {headers}) => {
+    
+    interface wcpOrder {
+        orderLink: string
+        order: string
+        date: string
+        paymentStatus: string
+        fulfillmentStatus: string
+        total: string
+        receipt?: string
+    }
+
+    let orders = await page.locator("table.tt-table-shop-01").evaluate((table, {headers}) => {
         //@ts-ignore
         return Array.from(table.querySelectorAll("tbody tr")).map((tr) => {
             //@ts-ignore
@@ -51,9 +67,35 @@ async function wcpLogin(page:Page) {
                 return prevVal;
             }, {});
         });
-    }, {headers});
+    }, { headers }) as wcpOrder[];
 
+    await mkdir("./receipts/wcp", { recursive: true});
 
-    console.log(data);
+    console.log("Starting Order Receipt Download")
+    for (let order of orders) {
+        order.date = normalizeDate(order.date);
+        console.log(`Navigating to ${order.orderLink}`);
+        await page.goto(order.orderLink);
+
+        await page.emulateMedia({ media: 'print' });
+        await page.addStyleTag({
+            content: `
+            @media print {
+                footer, .ssw-reward-tab.ssw-reward-tab-left, #launcher-frame, .tt-mobile-parent-menu, .tt-mobile-parent-menu-icons {
+                    display: none;
+                    visibility: hidden;
+                }  
+            }`});
+        order.receipt = `${order.date}-wcp-${order.order}.pdf`;
+        await page.pdf({
+            path: `./receipts/wcp/${order.receipt}`
+        });
+    }
+    // console.log(orders);
+
+    await writeFile("./receipts/wcp/orders.json", JSON.stringify(orders, null, '\t'))
+    console.log("Done");
+    
+    browser.close()
 
 })();
