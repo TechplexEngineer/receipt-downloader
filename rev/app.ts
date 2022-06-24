@@ -128,14 +128,9 @@ async function extractOrders(page: Page): Promise<revOrder[]> {
   
         await noJsPage.emulateMedia({ media: 'print' });
         await noJsPage.pause();
-        // await noJsPage.addStyleTag({
-        //     content: `
-        //     @media print {
-        //         footer, .ssw-reward-tab.ssw-reward-tab-left, #launcher-frame, .tt-mobile-parent-menu, .tt-mobile-parent-menu-icons {
-        //             display: none;
-        //             visibility: hidden;
-        //         }  
-        //     }`});
+        
+
+        //NOTE: PDF creation only supported in headless mode
         order.receipt = `${order.date}-rev-${order.orderId}.pdf`;
         await noJsPage.pdf({
             path: `./receipts/rev/${order.receipt}`

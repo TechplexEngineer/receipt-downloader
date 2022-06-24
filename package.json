@@ -19,7 +19,9 @@
     "wcp": "ts-node-esm wcp/app.ts",
     "wcp-debug": "PWDEBUG=console npm run wcp",
     "rev": "ts-node-esm rev/app.ts",
-    "rev-debug": "PWDEBUG=console npm run rev"
+    "rev-debug": "PWDEBUG=console npm run rev",
+    "amz": "ts-node-esm amazon/app.ts",
+    "amz-debug": "PWDEBUG=console npm run amz"
   },
   "keywords": [],
   "author": "",
