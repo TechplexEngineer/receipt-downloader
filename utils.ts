@@ -1,4 +1,4 @@
-
+import 'any-date-parser';
 /**
  * Wrapper for setTimeout to create delays
  * @param ms number of miliseconds to delay
@@ -13,17 +13,24 @@ export const delay = (ms: number): Promise<void> => new Promise(resolve => setTi
  */
 export function normalizeDate(input: string): string {
 
+    const currentYear = new Date().getFullYear();
+
     // mcm date
-    if (input.indexOf(",") == -1) {
-        input += `, ${new Date().getFullYear()}`;
+    if (input.indexOf(",") == -1 && input.indexOf(currentYear.toString()) == -1) {
+        input += `, ${currentYear}`;
     }
 
     // wcp date
     if (input.indexOf(":") !== -1) {
         input = input.substring(0, input.indexOf(":") - 2)
-        input += `, ${new Date().getFullYear()}`;
+        input += `${currentYear}`;
     }
-
-    const event = new Date(Date.parse(input));
+    
+    // @ts-ignore
+    const event = Date.fromString(input)
+    if (event.invalid) {
+        throw new Error(`Invalid Date Input: ${input} - error ${JSON.stringify(event)}`);
+        
+    }
     return event.toISOString().split("T")[0];
 }
