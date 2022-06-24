@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { chromium, Cookie, Page } from 'playwright';
 import { delay } from '../utils';
 import camelCase from 'lodash.camelcase';
-import { normalizeDate } from '../mcmaster/utils.js';
+import { normalizeDate } from '../utils.js';
 import { mkdir, writeFile } from 'fs/promises';
 import { fstat } from 'fs';
 

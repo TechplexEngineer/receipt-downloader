@@ -13,7 +13,7 @@
   "scripts": {
     "test": "playwright test",
     "_mcm": "https://github.com/TypeStrong/ts-node/issues/1007",
-    "mcm": "ts-node-esm mcmaster/app.ts",
+    "mcm": "ts-node-esm --no-warnings mcmaster/app.ts",
     "mcm-debug": "PWDEBUG=console npm run mcm",
     "wcp": "ts-node-esm wcp/app.ts",
     "wcp-debug": "PWDEBUG=console npm run wcp"

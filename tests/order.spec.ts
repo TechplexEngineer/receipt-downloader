@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import type { Page } from 'playwright';
 import 'dotenv/config';
 
-import { normalizeDate, mcmLogin as login, getOrderDate, getPurchaseOrder } from "../mcmaster/utils.ts";
-import { delay } from '../utils.ts';
+import { mcmLogin as login, getOrderDate, getPurchaseOrder } from "../mcmaster/utils.ts";
+import { delay, normalizeDate } from '../utils.ts';
 
 
 

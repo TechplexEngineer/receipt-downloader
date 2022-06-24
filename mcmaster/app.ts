@@ -1,9 +1,9 @@
 import 'dotenv/config';
 
 import { chromium, Cookie, Page } from 'playwright';
-import { mkdir } from 'fs/promises';
-import { delay } from '../utils.js';
-import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, mcmLogin, normalizeDate } from './utils.js';
+import { mkdir, writeFile } from 'fs/promises';
+import { delay, normalizeDate } from '../utils.js';
+import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, mcmLogin } from './utils.js';
 
 
 async function getOrderUrls(page: Page) {
@@ -102,31 +102,16 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 	// const page = await browser.newPage();
 	const page = await context.newPage();
 
-
+	console.log("Starting Login");
+	
 	await mcmLogin(page);
 	await delay(1000);
 
 	const cookies = await context.cookies(["https://mcmaster.com"]);
 
-
-
-	// const orderUrl = "https://www.mcmaster.com/order-history/order/62195bdd6b8bf43f6c368068/";
-	// const orderInfo = await processOrderList(page, orderUrl);
- //  console.log(orderInfo);
-
-	// await page.pause();
-	// const options = {
-	//   headers: {
-	//     "cookie": buildCookieHeader(cookies) //cookie needed for authentication
-	//   }
-	// }
-	// const orderReceiptUrl = "https://www.mcmaster.com/mv1655819346/WebParts/Activity/PDFRetriever/Receipts%20for%20PO%200226BBOURQUE.pdf?orderId=62195bdd6b8bf43f6c368068&docType=Invoice&action=1&loaded=1&retryCount=1"
-	// await downloadFile(orderReceiptUrl, `./${extractPDFName(orderReceiptUrl)}`, options)
-
-	//////////////
-
 	await mkdir("./receipts/mcmaster", { recursive: true })
 
+	const orderList = [];
 	const orderUrls = await getOrderUrls(page);
 	for (let orderUrl of orderUrls) {
 		console.log(`Navigating to ${orderUrl}`);
@@ -137,7 +122,6 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 				"cookie": buildCookieHeader(cookies) //cookie needed for authentication
 			}
 		};
-		// 
 
 
 		const volver = cookies.filter(c => c.name == "volver")[0].value; // not really shure what this is
@@ -147,10 +131,15 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 		orderInfo.orderReceiptFile = extractPDFName(receiptURL);
 		// @ts-ignore
 		await downloadFile(receiptURL, `./receipts/mcmaster/${orderInfo.orderReceiptFile}`, options);
-		console.log(orderInfo);
 
-		// break;
+		orderList.push(orderInfo)
+
 	}
+
+	await writeFile("./receipts/mcmaster/orders.json", JSON.stringify(orderList, null, '\t'));
+
+	console.log("Done");
+	
 
 	await browser.close();
 })();
