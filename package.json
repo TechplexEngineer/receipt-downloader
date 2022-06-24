@@ -16,7 +16,9 @@
     "mcm": "ts-node-esm --no-warnings mcmaster/app.ts",
     "mcm-debug": "PWDEBUG=console npm run mcm",
     "wcp": "ts-node-esm wcp/app.ts",
-    "wcp-debug": "PWDEBUG=console npm run wcp"
+    "wcp-debug": "PWDEBUG=console npm run wcp",
+    "rev": "ts-node-esm rev/app.ts",
+    "rev-debug": "PWDEBUG=console npm run rev"
   },
   "keywords": [],
   "author": "",
