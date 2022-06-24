@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { chromium, Cookie, Page } from 'playwright';
 
 import { delay } from '../utils.js';
-import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, login, normalizeDate } from './utils.js';
+import { downloadFile, extractPDFName, getOrderDate, getPurchaseOrder, mcmLogin, normalizeDate } from './utils.js';
 
 
 async function getOrderUrls(page: Page) {
@@ -94,7 +94,7 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 }
 
 ;(async () => {
-	const browser = await chromium.launch({ headless: false, slowMo: 50 });
+	const browser = await chromium.launch();
 
 	// Creates a new browser context. It won't share cookies/cache with other browser contexts.
 	const context = await browser.newContext();
@@ -103,7 +103,7 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 	const page = await context.newPage();
 
 
-	await login(page);
+	await mcmLogin(page);
 	await delay(1000);
 
 	const cookies = await context.cookies(["https://mcmaster.com"]);
@@ -147,7 +147,7 @@ function buildCookieHeader(cookiesList: Cookie[]) {
 		await downloadFile(receiptURL, `./${orderInfo.orderReceiptFile}`, options);
 		console.log(orderInfo);
 
-		break;
+		// break;
 	}
 
 	await browser.close();

@@ -2,6 +2,7 @@
   "dependencies": {
     "@playwright/test": "^1.22.2",
     "dotenv": "^16.0.1",
+    "lodash.camelcase": "^4.3.0",
     "playwright": "^1.22.2"
   },
   "name": "expenses",
@@ -12,7 +13,10 @@
   "scripts": {
     "test": "playwright test",
     "_mcm": "https://github.com/TypeStrong/ts-node/issues/1007",
-    "mcm": "ts-node-esm mcmaster/app.ts"
+    "mcm": "ts-node-esm mcmaster/app.ts",
+    "mcm-debug": "PWDEBUG=console npm run mcm",
+    "wcp": "ts-node-esm wcp/app.ts",
+    "wcp-debug": "PWDEBUG=console npm run wcp"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +24,7 @@
   "description": "",
   "devDependencies": {
     "@types/jest": "^28.1.3",
+    "@types/lodash.camelcase": "^4.3.7",
     "@types/node": "^18.0.0",
     "eslint": "^8.18.0",
     "ts-node": "^10.8.1",

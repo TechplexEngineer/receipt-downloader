@@ -25,12 +25,17 @@ export function normalizeDate(input: string): string {
  * - MCMASTER_PASSWORD
  * @param page a playwright browser page
  */
-export async function login(page: Page) {
-    await page.goto('https://www.mcmaster.com/order-history');
+export async function mcmLogin(page: Page) {
+    const url = 'https://www.mcmaster.com/order-history';
+    await page.goto(url);
     await page.locator('input#Email[type="text"]').waitFor()
     await page.locator('input#Email[type="text"]').fill(process.env.MCMASTER_USERNAME || "");
-    await page.locator('input#Password[type="password"]').fill(process.env.MCMASTER_PASSWORD || "");
-    await page.locator('input#Password[type="password"]').press('Enter');
+    const $pwField = page.locator('input#Password[type="password"]');
+    await $pwField.fill(process.env.MCMASTER_PASSWORD || "");
+    await Promise.all([
+        page.waitForNavigation(/*{ url: url }*/),
+        await $pwField.press('Enter')
+    ]);
 }
 
 
