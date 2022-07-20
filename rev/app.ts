@@ -83,6 +83,8 @@ async function extractOrders(page: Page): Promise<revOrder[]> {
     console.log("Starting Login")
     await revLogin(page);
 
+    // console.log(await context.cookies(page.url()))
+
     console.log("Starting Order Extraction")
 
     let orders: revOrder[] = [];
@@ -116,6 +118,9 @@ async function extractOrders(page: Page): Promise<revOrder[]> {
 
     // need this b/c the invoice page has a window.print()
     const noJsContext = await browser.newContext({javaScriptEnabled: false});
+
+    noJsContext.addCookies(await context.cookies(page.url()))
+
     const noJsPage = await noJsContext.newPage()
 
     console.log("Starting Order Receipt Download")
