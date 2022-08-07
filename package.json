@@ -20,8 +20,12 @@
     "wcp-debug": "PWDEBUG=console npm run wcp",
     "rev": "ts-node-esm rev/app.ts",
     "rev-debug": "PWDEBUG=console npm run rev",
-    "amz": "ts-node-esm amazon/app.ts",
-    "amz-debug": "PWDEBUG=console npm run amz"
+    "amz": "ts-node-esm amazon_html_to_pdf/app.ts",
+    "amz-debug": "PWDEBUG=console npm run amz",
+    "onm": "ts-node-esm onlinemetals/app.ts",
+    "onm-debug": "PWDEBUG=console npm run onm",
+    "haffners": "ts-node-esm haffners/app.ts",
+    "haffners-debug": "PWDEBUG=console npm run haffners"
   },
   "keywords": [],
   "author": "",
